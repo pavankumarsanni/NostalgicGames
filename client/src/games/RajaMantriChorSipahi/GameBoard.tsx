@@ -1,31 +1,32 @@
 import { useState } from 'react';
-import { useSocket } from '../../context/SocketContext';
+import { useGame } from '../../context/PusherContext';
+import { useGameActions } from '../../hooks/useGameActions';
 import { Player } from '../../types';
 import clsx from 'clsx';
 
 export default function GameBoard() {
-  const { socket, room, lastGuessResult } = useSocket();
+  const { room, playerId, lastGuessResult } = useGame();
+  const { makeGuess } = useGameActions();
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
 
   if (!room) return null;
 
-  const me = room.players.find(p => p.id === socket?.id);
+  const me = room.players.find(p => p.id === playerId);
   const myCard = me?.card;
   const currentTurn = room.currentTurn;
-  const isMyTurn = currentTurn?.guesserPlayerId === socket?.id;
+  const isMyTurn = currentTurn?.guesserPlayerId === playerId;
   const guesser = room.players.find(p => p.id === currentTurn?.guesserPlayerId);
+  const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
 
   function handleGuess() {
     if (!selectedTarget || !isMyTurn) return;
-    socket?.emit('make-guess', { targetPlayerId: selectedTarget });
+    makeGuess(selectedTarget);
     setSelectedTarget(null);
   }
 
-  const sortedPlayers = [...room.players].sort((a, b) => b.score - a.score);
-
   return (
     <div className="min-h-screen flex flex-col items-center gap-4 p-4 pb-8 max-w-lg mx-auto">
-      {/* Round badge */}
+      {/* Round indicator */}
       <div className="flex items-center gap-3 w-full justify-between">
         <span className="text-sm text-gray-500">Round {room.round} / {room.maxRounds}</span>
         <div className="flex gap-1">
@@ -35,7 +36,7 @@ export default function GameBoard() {
         </div>
       </div>
 
-      {/* My card reveal */}
+      {/* My card */}
       <div className="card-glass p-5 w-full text-center animate-slide-up">
         <p className="text-gray-400 text-xs uppercase tracking-widest mb-2">Your card</p>
         {myCard ? (
@@ -49,7 +50,7 @@ export default function GameBoard() {
         )}
       </div>
 
-      {/* Toast notification for guess result */}
+      {/* Guess result toast */}
       {lastGuessResult && (
         <div className={clsx(
           'w-full rounded-2xl px-5 py-4 text-center font-semibold animate-bounce-in',
@@ -65,7 +66,7 @@ export default function GameBoard() {
         </div>
       )}
 
-      {/* Current turn status */}
+      {/* Turn status */}
       <div className="card-glass p-4 w-full">
         {currentTurn ? (
           <div className="text-center">
@@ -84,12 +85,12 @@ export default function GameBoard() {
         )}
       </div>
 
-      {/* Player grid — tap to select */}
+      {/* Player grid */}
       <div className="w-full">
         <p className="text-gray-400 text-xs uppercase tracking-widest mb-3 text-center">Players</p>
         <div className="grid grid-cols-2 gap-3">
           {room.players.map((player: Player) => {
-            const isSelf = player.id === socket?.id;
+            const isSelf = player.id === playerId;
             const isGuesser = player.id === currentTurn?.guesserPlayerId;
             const isSelected = selectedTarget === player.id;
             const canTarget = isMyTurn && !isSelf && !isGuesser;
@@ -104,7 +105,7 @@ export default function GameBoard() {
                   isSelected && 'border-amber-400 bg-amber-900/30 animate-pulse-glow',
                   !isSelected && canTarget && 'border-gray-700 bg-gray-800/50 hover:border-purple-500 cursor-pointer',
                   !isSelected && !canTarget && 'border-gray-800 bg-gray-900/30 cursor-not-allowed opacity-60',
-                  isGuesser && 'border-purple-500 bg-purple-900/20',
+                  isGuesser && !isSelected && 'border-purple-500 bg-purple-900/20',
                 )}
               >
                 <div className="flex items-center gap-3">

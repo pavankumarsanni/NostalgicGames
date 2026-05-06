@@ -2,13 +2,19 @@
   "name": "nostalgic-games",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["client", "server"],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
-    "build": "npm run build --workspace=client && npm run build --workspace=server",
-    "install:all": "npm install"
+    "dev": "vercel dev",
+    "build": "cd client && npm install && npm run build"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.0",
+    "@vercel/node": "^3.0.0",
+    "pusher": "^5.1.3",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^20.3.1",
+    "@types/uuid": "^9.0.2",
+    "typescript": "^5.1.3"
   }
 }

@@ -2,44 +2,42 @@ import { useState } from 'react';
 import { RoleCard } from '../../types';
 
 const ALL_AVAILABLE_CARDS: RoleCard[] = [
-  { id: 'king',      name: 'King',      emoji: '👑', rank: 1 },
-  { id: 'queen',     name: 'Queen',     emoji: '👸', rank: 2 },
-  { id: 'minister',  name: 'Minister',  emoji: '🧙', rank: 3 },
-  { id: 'police',    name: 'Police',    emoji: '👮', rank: 4 },
-  { id: 'thief',     name: 'Thief',     emoji: '🦹', rank: 5 },
-  { id: 'guard',     name: 'Guard',     emoji: '🛡️', rank: 6 },
-  { id: 'spy',       name: 'Spy',       emoji: '🕵️', rank: 7 },
-  { id: 'jester',    name: 'Jester',    emoji: '🃏', rank: 8 },
+  { id: 'king',     name: 'King',     emoji: '👑', rank: 1 },
+  { id: 'queen',    name: 'Queen',    emoji: '👸', rank: 2 },
+  { id: 'minister', name: 'Minister', emoji: '🧙', rank: 3 },
+  { id: 'police',   name: 'Police',   emoji: '👮', rank: 4 },
+  { id: 'thief',    name: 'Thief',    emoji: '🦹', rank: 5 },
+  { id: 'guard',    name: 'Guard',    emoji: '🛡️', rank: 6 },
+  { id: 'spy',      name: 'Spy',      emoji: '🕵️', rank: 7 },
+  { id: 'jester',   name: 'Jester',   emoji: '🃏', rank: 8 },
 ];
+
+const DEFAULT_IDS = new Set(['king', 'queen', 'minister', 'police', 'thief']);
 
 type Props = {
   cards: RoleCard[];
   playerCount: number;
   onUpdate: (cards: RoleCard[]) => void;
-  defaultCards: RoleCard[];
 };
 
-export default function CardSetupPanel({ cards, playerCount, onUpdate, defaultCards }: Props) {
+export default function CardSetupPanel({ cards, playerCount, onUpdate }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set(cards.map(c => c.id)));
 
   function toggle(card: RoleCard) {
     const next = new Set(selected);
     if (next.has(card.id)) {
-      // Must keep at least King and Thief + enough for players
-      if (next.size <= 2) return;
+      if (next.size <= 2) return; // keep at least 2
       next.delete(card.id);
     } else {
       next.add(card.id);
     }
     setSelected(next);
-    const newCards = ALL_AVAILABLE_CARDS.filter(c => next.has(c.id));
-    onUpdate(newCards);
+    onUpdate(ALL_AVAILABLE_CARDS.filter(c => next.has(c.id)));
   }
 
   function reset() {
-    const ids = new Set(defaultCards.map(c => c.id));
-    setSelected(ids);
-    onUpdate(defaultCards);
+    setSelected(new Set(DEFAULT_IDS));
+    onUpdate(ALL_AVAILABLE_CARDS.filter(c => DEFAULT_IDS.has(c.id)));
   }
 
   const enough = selected.size >= playerCount;
@@ -47,8 +45,9 @@ export default function CardSetupPanel({ cards, playerCount, onUpdate, defaultCa
   return (
     <div className="space-y-3">
       <p className="text-sm text-gray-400">
-        Select cards to include. Need at least <strong className="text-white">{playerCount}</strong> cards for {playerCount} players.
-        <span className={`ml-2 font-bold ${enough ? 'text-green-400' : 'text-red-400'}`}>
+        Select cards to include. Need at least{' '}
+        <strong className="text-white">{playerCount}</strong> for {playerCount} players.{' '}
+        <span className={`font-bold ${enough ? 'text-green-400' : 'text-red-400'}`}>
           {selected.size} selected
         </span>
       </p>

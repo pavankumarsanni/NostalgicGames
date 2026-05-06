@@ -1,16 +1,17 @@
-import { useSocket } from '../../context/SocketContext';
+import { useGame } from '../../context/PusherContext';
+import { useGameActions } from '../../hooks/useGameActions';
 import clsx from 'clsx';
 
 export default function RoundEnd() {
-  const { socket, room } = useSocket();
+  const { room, playerId } = useGame();
+  const { nextRound } = useGameActions();
   if (!room) return null;
 
-  const me = room.players.find(p => p.id === socket?.id);
+  const me = room.players.find(p => p.id === playerId);
   const isHost = me?.isHost ?? false;
   const sorted = [...room.players].sort((a, b) => b.score - a.score);
   const isLastRound = room.round >= room.maxRounds;
 
-  // Reveal all cards at round end
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-4 max-w-md mx-auto">
       <div className="text-center animate-bounce-in">
@@ -24,10 +25,7 @@ export default function RoundEnd() {
         <h3 className="font-bold mb-4 text-center text-gray-300">Who had what?</h3>
         <div className="grid grid-cols-2 gap-3">
           {room.players.map(player => (
-            <div
-              key={player.id}
-              className="bg-gray-800/50 rounded-xl p-3 flex items-center gap-3"
-            >
+            <div key={player.id} className="bg-gray-800/50 rounded-xl p-3 flex items-center gap-3">
               <span className="text-2xl">{player.card?.emoji ?? '❓'}</span>
               <div>
                 <div className="font-semibold text-sm">{player.name}</div>
@@ -58,16 +56,11 @@ export default function RoundEnd() {
         </div>
       </div>
 
-      {isHost && (
-        <button
-          onClick={() => socket?.emit('next-round', {})}
-          className="btn-primary w-full text-lg"
-        >
+      {isHost ? (
+        <button onClick={nextRound} className="btn-primary w-full text-lg">
           {isLastRound ? '🏆 See Final Results' : '▶️ Next Round'}
         </button>
-      )}
-
-      {!isHost && (
+      ) : (
         <p className="text-gray-500 text-sm animate-pulse">Waiting for host to continue…</p>
       )}
     </div>

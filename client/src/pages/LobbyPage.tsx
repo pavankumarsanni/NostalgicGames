@@ -1,20 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSocket } from '../context/SocketContext';
+import { useGame } from '../context/PusherContext';
+import { useGameActions } from '../hooks/useGameActions';
 import { RoleCard } from '../types';
 import CardSetupPanel from '../games/RajaMantriChorSipahi/CardSetupPanel';
 
-const DEFAULT_CARDS: RoleCard[] = [
-  { id: 'king',     name: 'King',     emoji: '👑', rank: 1 },
-  { id: 'queen',    name: 'Queen',    emoji: '👸', rank: 2 },
-  { id: 'minister', name: 'Minister', emoji: '🧙', rank: 3 },
-  { id: 'police',   name: 'Police',   emoji: '👮', rank: 4 },
-  { id: 'thief',    name: 'Thief',    emoji: '🦹', rank: 5 },
-];
-
 export default function LobbyPage() {
   const navigate = useNavigate();
-  const { socket, room, error, clearError } = useSocket();
+  const { room, playerId, error, setError } = useGame();
+  const { startGame, updateCards } = useGameActions();
   const [copied, setCopied] = useState(false);
   const [showCardSetup, setShowCardSetup] = useState(false);
 
@@ -28,7 +22,7 @@ export default function LobbyPage() {
 
   if (!room) return null;
 
-  const me = room.players.find(p => p.id === socket?.id);
+  const me = room.players.find(p => p.id === playerId);
   const isHost = me?.isHost ?? false;
   const canStart = room.players.length >= 3 && room.cards.length >= room.players.length;
 
@@ -38,12 +32,8 @@ export default function LobbyPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handleStart() {
-    socket?.emit('start-game', {});
-  }
-
   function handleCardsUpdate(cards: RoleCard[]) {
-    socket?.emit('update-cards', { cards });
+    updateCards(cards);
   }
 
   return (
@@ -70,10 +60,7 @@ export default function LobbyPage() {
         </h2>
         <div className="space-y-2">
           {room.players.map(player => (
-            <div
-              key={player.id}
-              className="flex items-center gap-3 bg-gray-800/50 rounded-xl px-4 py-3"
-            >
+            <div key={player.id} className="flex items-center gap-3 bg-gray-800/50 rounded-xl px-4 py-3">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-sm">
                 {player.name[0].toUpperCase()}
               </div>
@@ -81,7 +68,7 @@ export default function LobbyPage() {
               {player.isHost && (
                 <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full">Host</span>
               )}
-              {player.id === socket?.id && (
+              {player.id === playerId && (
                 <span className="text-xs text-gray-500">(you)</span>
               )}
             </div>
@@ -94,7 +81,7 @@ export default function LobbyPage() {
         )}
       </div>
 
-      {/* Card Setup */}
+      {/* Card Setup (host only) */}
       {isHost && (
         <div className="card-glass p-5 w-full max-w-md">
           <div className="flex items-center justify-between mb-3">
@@ -106,7 +93,6 @@ export default function LobbyPage() {
               {showCardSetup ? 'Hide ▲' : 'Customize ▼'}
             </button>
           </div>
-
           {!showCardSetup && (
             <div className="flex gap-2 flex-wrap">
               {room.cards.map(c => (
@@ -116,29 +102,26 @@ export default function LobbyPage() {
               ))}
             </div>
           )}
-
           {showCardSetup && (
             <CardSetupPanel
               cards={room.cards}
               playerCount={room.players.length}
               onUpdate={handleCardsUpdate}
-              defaultCards={DEFAULT_CARDS}
             />
           )}
         </div>
       )}
 
       {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-300 text-sm rounded-xl px-4 py-3 w-full max-w-md">
-          {error}
-          <button onClick={clearError} className="ml-2 text-red-400 hover:text-red-200">✕</button>
+        <div className="bg-red-900/50 border border-red-700 text-red-300 text-sm rounded-xl px-4 py-3 w-full max-w-md flex justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200 ml-2">✕</button>
         </div>
       )}
 
-      {/* Actions */}
       {isHost ? (
         <button
-          onClick={handleStart}
+          onClick={startGame}
           disabled={!canStart}
           className="btn-gold w-full max-w-md text-lg disabled:opacity-40 disabled:cursor-not-allowed"
         >

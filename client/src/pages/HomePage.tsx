@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSocket } from '../context/SocketContext';
+import { useGame } from '../context/PusherContext';
+import { useGameActions } from '../hooks/useGameActions';
 import { GameInfo } from '../types';
 
 const GAMES: GameInfo[] = [
@@ -17,7 +18,7 @@ const GAMES: GameInfo[] = [
     id: 'bluff',
     title: 'Bluff / Cheat',
     emoji: '🃏',
-    description: 'Play cards face-down and lie about them — but don\'t get caught!',
+    description: "Play cards face-down and lie about them — but don't get caught!",
     players: '3–6 players',
     status: 'coming-soon',
     gradient: 'from-red-900/80 to-orange-900/80',
@@ -62,13 +63,15 @@ const GAMES: GameInfo[] = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { socket, error, clearError } = useSocket();
+  const { error, setError } = useGame();
+  const { createRoom, joinRoom } = useGameActions();
 
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'join'>('create');
   const [playerName, setPlayerName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [selectedGame, setSelectedGame] = useState<GameInfo | null>(null);
+  const [loading, setLoading] = useState(false);
 
   function openCreate(game: GameInfo) {
     setSelectedGame(game);
@@ -82,21 +85,30 @@ export default function HomePage() {
     setShowModal(true);
   }
 
-  function handleCreate() {
-    if (!playerName.trim() || !socket) return;
-    socket.emit('create-room', { playerName: playerName.trim(), gameType: 'raja-mantri' });
-    socket.once('room-updated', () => navigate('/lobby'));
+  async function handleCreate() {
+    if (!playerName.trim()) return;
+    setLoading(true);
+    const room = await createRoom(playerName);
+    setLoading(false);
+    if (room) navigate('/lobby');
   }
 
-  function handleJoin() {
-    if (!playerName.trim() || !roomCode.trim() || !socket) return;
-    socket.emit('join-room', { code: roomCode.trim().toUpperCase(), playerName: playerName.trim() });
-    socket.once('room-updated', () => navigate('/lobby'));
+  async function handleJoin() {
+    if (!playerName.trim() || !roomCode.trim()) return;
+    setLoading(true);
+    const room = await joinRoom(roomCode, playerName);
+    setLoading(false);
+    if (room) navigate('/lobby');
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setError(null);
+    setLoading(false);
   }
 
   return (
     <div className="min-h-screen stars-bg">
-      {/* Header */}
       <header className="text-center py-12 px-4">
         <div className="text-5xl mb-4">🎮</div>
         <h1 className="font-retro text-2xl md:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-3">
@@ -107,7 +119,6 @@ export default function HomePage() {
         </p>
       </header>
 
-      {/* Game Grid */}
       <main className="max-w-5xl mx-auto px-4 pb-16">
         <h2 className="text-gray-400 font-body text-sm uppercase tracking-widest mb-6 text-center">
           Choose a game
@@ -124,19 +135,13 @@ export default function HomePage() {
                 <p className="text-gray-400 text-sm mt-1">{game.description}</p>
               </div>
               <div className="flex items-center justify-between mt-auto pt-2">
-                <span className="text-xs text-gray-500 font-body">{game.players}</span>
+                <span className="text-xs text-gray-500">{game.players}</span>
                 {game.status === 'available' ? (
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => openJoin(game)}
-                      className="btn-secondary text-sm py-2 px-3"
-                    >
+                    <button onClick={() => openJoin(game)} className="btn-secondary text-sm py-2 px-3">
                       Join
                     </button>
-                    <button
-                      onClick={() => openCreate(game)}
-                      className="btn-primary text-sm py-2 px-3"
-                    >
+                    <button onClick={() => openCreate(game)} className="btn-primary text-sm py-2 px-3">
                       Create
                     </button>
                   </div>
@@ -151,7 +156,6 @@ export default function HomePage() {
         </div>
       </main>
 
-      {/* Modal */}
       {showModal && selectedGame && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="card-glass p-6 w-full max-w-sm animate-bounce-in">
@@ -162,9 +166,9 @@ export default function HomePage() {
             <p className="text-gray-400 text-sm mb-5">{selectedGame.title}</p>
 
             {error && (
-              <div className="bg-red-900/50 border border-red-700 text-red-300 text-sm rounded-xl px-4 py-3 mb-4">
-                {error}
-                <button onClick={clearError} className="ml-2 text-red-400 hover:text-red-200">✕</button>
+              <div className="bg-red-900/50 border border-red-700 text-red-300 text-sm rounded-xl px-4 py-3 mb-4 flex items-start justify-between gap-2">
+                <span>{error}</span>
+                <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200 shrink-0">✕</button>
               </div>
             )}
 
@@ -178,6 +182,7 @@ export default function HomePage() {
                   onChange={e => setPlayerName(e.target.value)}
                   maxLength={20}
                   autoFocus
+                  onKeyDown={e => e.key === 'Enter' && (modalMode === 'create' ? handleCreate() : handleJoin())}
                 />
               </div>
 
@@ -190,23 +195,21 @@ export default function HomePage() {
                     value={roomCode}
                     onChange={e => setRoomCode(e.target.value.toUpperCase())}
                     maxLength={5}
+                    onKeyDown={e => e.key === 'Enter' && handleJoin()}
                   />
                 </div>
               )}
 
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => { setShowModal(false); clearError(); }}
-                  className="btn-secondary flex-1"
-                >
+                <button onClick={closeModal} className="btn-secondary flex-1">
                   Cancel
                 </button>
                 <button
                   onClick={modalMode === 'create' ? handleCreate : handleJoin}
-                  disabled={!playerName.trim() || (modalMode === 'join' && !roomCode.trim())}
-                  className="btn-primary flex-1 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                  disabled={loading || !playerName.trim() || (modalMode === 'join' && !roomCode.trim())}
+                  className="btn-primary flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {modalMode === 'create' ? '🚀 Create' : '🎮 Join'}
+                  {loading ? '⏳' : modalMode === 'create' ? '🚀 Create' : '🎮 Join'}
                 </button>
               </div>
             </div>
