@@ -37,7 +37,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     maxRounds: 3,
   };
 
-  await saveRoom(room);
-  await broadcastRoom(room);
-  res.json(room);
+  try {
+    await saveRoom(room);
+    await broadcastRoom(room);
+    res.json(room);
+  } catch (err: any) {
+    console.error('create-room error:', err);
+    res.status(500).json({ error: err?.message ?? 'Internal server error' });
+  }
 }
