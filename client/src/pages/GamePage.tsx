@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSocket } from '../context/SocketContext';
+import { useGame } from '../context/PusherContext';
 import GameBoard from '../games/RajaMantriChorSipahi/GameBoard';
 import RoundEnd from '../games/RajaMantriChorSipahi/RoundEnd';
 import GameOver from '../games/RajaMantriChorSipahi/GameOver';
 
 export default function GamePage() {
   const navigate = useNavigate();
-  const { room } = useSocket();
+  const { room } = useGame();
 
   useEffect(() => {
     if (!room) navigate('/');
