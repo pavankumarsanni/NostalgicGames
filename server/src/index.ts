@@ -6,13 +6,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { Room, Player, RoleCard } from './types';
 import { DEFAULT_CARDS, dealCards, processGuess, startNextRound } from './games/rajaMantri';
 
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173'];
+
 const app = express();
-app.use(cors());
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
+  cors: { origin: ALLOWED_ORIGINS, methods: ['GET', 'POST'] },
 });
 
 const rooms = new Map<string, Room>();
