@@ -8,17 +8,15 @@ export const DEFAULT_CARDS: RoleCard[] = [
   { id: 'thief',    name: 'Thief',    emoji: '🦹', rank: 5 },
 ];
 
-// Points awarded at round-end based on the card held.
-// Cards sorted by rank ascending: index 0 = highest role (King), last index = lowest (Thief).
-// Formula: (n - 1 - index) * 10  →  King always max, last card always 0.
-function calcRoundPoints(room: Room): Player[] {
+// Points earned when a player successfully identifies the next card.
+// Based on the guesser's current card rank: King earns the most, Thief earns 0.
+// Formula: (n - 1 - rankIndex) * 10  (0-based index in sorted used-cards list)
+function pointsForCorrectGuess(room: Room, guesserPlayerId: string): number {
   const n = room.players.length;
   const usedCards = room.cards.slice(0, n).sort((a, b) => a.rank - b.rank);
-  return room.players.map(p => {
-    const idx = usedCards.findIndex(c => c.id === p.card?.id);
-    const earned = idx >= 0 ? (n - 1 - idx) * 10 : 0;
-    return { ...p, score: p.score + earned };
-  });
+  const guesser = room.players.find(p => p.id === guesserPlayerId);
+  const idx = usedCards.findIndex(c => c.id === guesser?.card?.id);
+  return idx >= 0 ? (n - 1 - idx) * 10 : 0;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -67,11 +65,15 @@ export function processGuess(
   let players = [...room.players];
 
   if (correct) {
+    // Award points to the guesser based on their current card
+    const earned = pointsForCorrectGuess(room, guesserPlayerId);
+    players = players.map(p =>
+      p.id === guesserPlayerId ? { ...p, score: p.score + earned } : p
+    );
+
     const nextIndex = room.currentTurnIndex + 1;
     if (nextIndex >= room.turnSequence.length) {
-      // Round over — award points based on final cards held
-      const scoredPlayers = calcRoundPoints({ ...room, players });
-      return { room: { ...room, players: scoredPlayers, phase: 'round-end', currentTurn: null }, correct: true };
+      return { room: { ...room, players, phase: 'round-end', currentTurn: null }, correct: true };
     }
 
     const nextGuesserPlayerId = room.turnSequence[nextIndex];
