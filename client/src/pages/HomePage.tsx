@@ -15,10 +15,10 @@ const GAMES: GameInfo[] = [
     gradient: 'from-purple-900/80 to-indigo-900/80',
   },
   {
-    id: 'pass-the-card',
-    title: 'Pass The Card',
+    id: 'chit-chase',
+    title: 'Chit Chase',
     emoji: '🃏',
-    description: 'Pick a card to pass! Collect 4 of the same animal to win. Fast, fun & chaotic!',
+    description: 'Pass chits around and collect 4 of the same! Choose from animals, sports, music & more.',
     players: '2–8 players',
     status: 'available',
     gradient: 'from-red-900/80 to-orange-900/80',
@@ -88,7 +88,7 @@ export default function HomePage() {
   async function handleCreate() {
     if (!playerName.trim()) return;
     setLoading(true);
-    const gameType = selectedGame?.id === 'pass-the-card' ? 'pass-the-card' : 'raja-mantri';
+    const gameType = selectedGame?.id === 'chit-chase' ? 'chit-chase' : 'raja-mantri';
     const room = await createRoom(playerName, gameType);
     setLoading(false);
     if (room) navigate('/lobby');

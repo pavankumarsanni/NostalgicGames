@@ -1,12 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getRoom, saveRoom } from '../../lib/kv';
 import { broadcastRoom } from '../../lib/pusher';
-import { dealPTC } from '../../lib/passTheCard';
+import { dealChitChase } from '../../lib/chitChase';
+import { ChitTheme } from '../../lib/types';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { code, playerId } = req.body as { code: string; playerId: string };
+  const { code, playerId, theme = 'animals' } = req.body as {
+    code: string;
+    playerId: string;
+    theme?: ChitTheme;
+  };
+
   const room = await getRoom(code);
   if (!room) return res.status(404).json({ error: 'Room not found' });
 
@@ -16,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (room.players.length > 8) return res.status(400).json({ error: 'Max 8 players.' });
 
   try {
-    const updated = dealPTC(room);
+    const updated = dealChitChase(room, theme);
     await saveRoom(updated);
     await broadcastRoom(updated);
     res.json(updated);

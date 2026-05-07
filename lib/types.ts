@@ -21,23 +21,32 @@ export type GuessResultEvent = {
   targetRole: string;
 };
 
-// ─── Pass The Card ──────────────────────────────────────────────────────────
+// ─── Chit Chase ─────────────────────────────────────────────────────────────
+
+export type ChitTheme = 'animals' | 'flowers' | 'sports' | 'fruits' | 'countries' | 'music';
 
 export type ChitCard = {
-  uid: string;     // unique instance (e.g. "dog-0", "dog-1")
-  setId: string;   // which animal set (e.g. "dog")
+  uid: string;
+  setId: string;
   emoji: string;
   name: string;
 };
 
-export type PTCPhase = 'waiting' | 'selecting' | 'round-result' | 'game-over';
+export type PTCPhase = 'waiting' | 'selecting' | 'game-over';
+
+export type LastAction = {
+  fromName: string;
+  toName: string;
+  card: ChitCard;
+} | null;
 
 export type PTCData = {
-  hands: Record<string, ChitCard[]>;        // playerId -> 4 cards
-  selections: Record<string, string | null>; // playerId -> uid of card to pass (null = not chosen yet)
+  hands: Record<string, ChitCard[]>;
+  activePlayerIdx: number;
   round: number;
   winnerId: string | null;
-  lastPassedTo: Record<string, string>;     // playerId -> card uid they received last round
+  theme: ChitTheme;
+  lastAction: LastAction;
 };
 
 // ─── Shared ─────────────────────────────────────────────────────────────────
@@ -55,9 +64,9 @@ export type Player = {
 export type Room = {
   id: string;
   code: string;
-  gameType: 'raja-mantri' | 'pass-the-card';
+  gameType: 'raja-mantri' | 'chit-chase';
   players: Player[];
-  // Raja Mantri fields
+  // Raja Mantri
   phase: GamePhase;
   cards: RoleCard[];
   currentTurn: TurnState | null;
@@ -65,7 +74,7 @@ export type Room = {
   currentTurnIndex: number;
   round: number;
   maxRounds: number;
-  // Pass The Card fields
+  // Chit Chase
   ptcPhase?: PTCPhase;
   ptcData?: PTCData;
 };

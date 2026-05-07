@@ -1,5 +1,5 @@
 import { useGame } from '../context/PusherContext';
-import { RoleCard, Room } from '../types';
+import { ChitTheme, RoleCard, Room } from '../types';
 
 async function post<T>(path: string, body: object): Promise<T> {
   const res = await fetch(path, {
@@ -15,7 +15,7 @@ async function post<T>(path: string, body: object): Promise<T> {
 export function useGameActions() {
   const { playerId, roomCode, setRoom, setRoomCode, setError } = useGame();
 
-  async function createRoom(playerName: string, gameType: 'raja-mantri' | 'pass-the-card' = 'raja-mantri') {
+  async function createRoom(playerName: string, gameType: 'raja-mantri' | 'chit-chase' = 'raja-mantri') {
     try {
       const room = await post<Room>('/api/rooms/create', { playerName, playerId, gameType });
       setRoomCode(room.code);
@@ -69,15 +69,15 @@ export function useGameActions() {
     }
   }
 
-  async function ptcStartGame() {
+  async function chitChaseStart(theme: ChitTheme) {
     try {
-      await post('/api/ptc/start', { code: roomCode, playerId });
+      await post('/api/ptc/start', { code: roomCode, playerId, theme });
     } catch (e: any) {
       setError(e.message);
     }
   }
 
-  async function ptcSelectCard(cardUid: string) {
+  async function chitChasePass(cardUid: string) {
     try {
       await post('/api/ptc/select', { code: roomCode, playerId, cardUid });
     } catch (e: any) {
@@ -85,5 +85,5 @@ export function useGameActions() {
     }
   }
 
-  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards, ptcStartGame, ptcSelectCard };
+  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards, chitChaseStart, chitChasePass };
 }

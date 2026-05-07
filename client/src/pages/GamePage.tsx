@@ -4,8 +4,8 @@ import { useGame } from '../context/PusherContext';
 import GameBoard from '../games/RajaMantriChorSipahi/GameBoard';
 import RoundEnd from '../games/RajaMantriChorSipahi/RoundEnd';
 import GameOver from '../games/RajaMantriChorSipahi/GameOver';
-import PTCGameBoard from '../games/PassTheCard/GameBoard';
-import PTCWinScreen from '../games/PassTheCard/WinScreen';
+import ChitChaseBoard from '../games/ChitChase/GameBoard';
+import ChitChaseWin from '../games/ChitChase/WinScreen';
 
 export default function GamePage() {
   const navigate = useNavigate();
@@ -17,10 +17,10 @@ export default function GamePage() {
 
   if (!room) return null;
 
-  // Pass The Card
-  if (room.gameType === 'pass-the-card') {
-    if (room.ptcPhase === 'game-over') return <PTCWinScreen />;
-    if (room.ptcPhase === 'selecting') return <PTCGameBoard />;
+  // Chit Chase
+  if (room.gameType === 'chit-chase') {
+    if (room.ptcPhase === 'game-over') return <ChitChaseWin />;
+    if (room.ptcPhase === 'selecting') return <ChitChaseBoard />;
   }
 
   // Raja Mantri
