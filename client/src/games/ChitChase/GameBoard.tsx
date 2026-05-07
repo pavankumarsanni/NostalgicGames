@@ -18,12 +18,6 @@ export default function ChitChaseBoard() {
   const isMyTurn = activePlayer?.id === playerId;
   const myHand: ChitCard[] = hands[playerId] ?? [];
 
-  // Group my hand by setId to show collection progress
-  const setGroups: Record<string, ChitCard[]> = {};
-  myHand.forEach(c => {
-    setGroups[c.setId] = setGroups[c.setId] ? [...setGroups[c.setId], c] : [c];
-  });
-
   async function handlePass() {
     if (!selected || !isMyTurn || passing) return;
     setPassing(true);
@@ -83,7 +77,6 @@ export default function ChitChaseBoard() {
           {myHand.map(card => {
             const isSelected = selected === card.uid;
             const locked = !isMyTurn || passing;
-            const matchCount = setGroups[card.setId]?.length ?? 0;
             return (
               <button
                 key={card.uid}
@@ -98,17 +91,10 @@ export default function ChitChaseBoard() {
               >
                 <span className="text-3xl">{card.emoji}</span>
                 <span className="text-xs text-gray-400">{card.name}</span>
-                {/* Match indicator dots */}
-                <div className="flex gap-0.5 mt-1">
-                  {[0,1,2,3].map(i => (
-                    <div key={i} className={clsx('w-1.5 h-1.5 rounded-full', i < matchCount ? 'bg-green-400' : 'bg-gray-700')} />
-                  ))}
-                </div>
               </button>
             );
           })}
         </div>
-        <p className="text-xs text-gray-600 text-center mt-2">Dots show how many of each card you have</p>
       </div>
 
       {/* Pass button */}
@@ -134,10 +120,6 @@ export default function ChitChaseBoard() {
             const hand = hands[p.id] ?? [];
             const isActive = i === activePlayerIdx;
             const isMe = p.id === playerId;
-            // Show collection progress
-            const best = Math.max(0, ...Object.values(
-              hand.reduce((acc, c) => ({ ...acc, [c.setId]: (acc[c.setId] ?? 0) + 1 }), {} as Record<string,number>)
-            ));
             return (
               <div
                 key={p.id}
@@ -156,12 +138,6 @@ export default function ChitChaseBoard() {
                   {p.name} {isMe && <span className="text-gray-500 text-xs">(you)</span>}
                 </span>
                 <span className="text-xs text-gray-500">{hand.length} cards</span>
-                {/* Best set progress */}
-                <div className="flex gap-0.5">
-                  {[0,1,2,3].map(i => (
-                    <div key={i} className={clsx('w-2 h-2 rounded-full', i < best ? 'bg-green-400' : 'bg-gray-700')} />
-                  ))}
-                </div>
                 {isActive && <span className="text-xs text-purple-400">🎯</span>}
               </div>
             );
