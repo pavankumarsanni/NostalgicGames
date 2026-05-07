@@ -12,6 +12,14 @@ export default function RoundEnd() {
   const sorted = [...room.players].sort((a, b) => b.score - a.score);
   const isLastRound = room.round >= room.maxRounds;
 
+  // Calculate points each player earned this round (same formula as server)
+  const n = room.players.length;
+  const usedCards = [...room.cards].sort((a, b) => a.rank - b.rank).slice(0, n);
+  function earnedThisRound(player: { card?: { id: string } }) {
+    const idx = usedCards.findIndex(c => c.id === player.card?.id);
+    return idx >= 0 ? (n - 1 - idx) * 10 : 0;
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-4 max-w-md mx-auto">
       <div className="text-center animate-bounce-in">
@@ -24,15 +32,21 @@ export default function RoundEnd() {
       <div className="card-glass p-5 w-full">
         <h3 className="font-bold mb-4 text-center text-gray-300">Who had what?</h3>
         <div className="grid grid-cols-2 gap-3">
-          {room.players.map(player => (
-            <div key={player.id} className="bg-gray-800/50 rounded-xl p-3 flex items-center gap-3">
-              <span className="text-2xl">{player.card?.emoji ?? '❓'}</span>
-              <div>
-                <div className="font-semibold text-sm">{player.name}</div>
-                <div className="text-xs text-gray-400">{player.card?.name ?? 'Unknown'}</div>
+          {room.players.map(player => {
+            const pts = earnedThisRound(player);
+            return (
+              <div key={player.id} className="bg-gray-800/50 rounded-xl p-3 flex items-center gap-3">
+                <span className="text-2xl">{player.card?.emoji ?? '❓'}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm truncate">{player.name}</div>
+                  <div className="text-xs text-gray-400">{player.card?.name ?? 'Unknown'}</div>
+                </div>
+                <span className={clsx('text-xs font-bold', pts > 0 ? 'text-amber-400' : 'text-gray-600')}>
+                  {pts > 0 ? `+${pts}` : '0'}
+                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
