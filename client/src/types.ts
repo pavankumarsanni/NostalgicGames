@@ -1,9 +1,48 @@
+// ─── Raja Mantri ────────────────────────────────────────────────────────────
+
 export type RoleCard = {
   id: string;
   name: string;
   emoji: string;
   rank: number;
 };
+
+export type GuessResult = 'correct' | 'incorrect';
+
+export type TurnState = {
+  guesserPlayerId: string;
+  targetRoleName: string;
+};
+
+export type GuessResultEvent = {
+  result: GuessResult;
+  guesserName: string;
+  guessedName: string;
+  targetRole: string;
+};
+
+// ─── Pass The Card ──────────────────────────────────────────────────────────
+
+export type ChitCard = {
+  uid: string;
+  setId: string;
+  emoji: string;
+  name: string;
+};
+
+export type PTCPhase = 'waiting' | 'selecting' | 'round-result' | 'game-over';
+
+export type PTCData = {
+  hands: Record<string, ChitCard[]>;
+  selections: Record<string, string | null>;
+  round: number;
+  winnerId: string | null;
+  lastPassedTo: Record<string, string>;
+};
+
+// ─── Shared ─────────────────────────────────────────────────────────────────
+
+export type GamePhase = 'waiting' | 'card-reveal' | 'round-end' | 'game-over';
 
 export type Player = {
   id: string;
@@ -13,27 +52,10 @@ export type Player = {
   isHost: boolean;
 };
 
-export type GamePhase =
-  | 'waiting'
-  | 'card-setup'
-  | 'card-reveal'
-  | 'playing'
-  | 'round-end'
-  | 'game-over';
-
-export type GuessResult = 'correct' | 'incorrect';
-
-export type TurnState = {
-  guesserPlayerId: string;
-  targetRoleName: string;
-  guessedPlayerId?: string;
-  result?: GuessResult;
-};
-
 export type Room = {
   id: string;
   code: string;
-  gameType: 'raja-mantri' | null;
+  gameType: 'raja-mantri' | 'pass-the-card';
   players: Player[];
   phase: GamePhase;
   cards: RoleCard[];
@@ -42,13 +64,8 @@ export type Room = {
   currentTurnIndex: number;
   round: number;
   maxRounds: number;
-};
-
-export type GuessResultEvent = {
-  result: GuessResult;
-  guesserName: string;
-  guessedName: string;
-  targetRole: string;
+  ptcPhase?: PTCPhase;
+  ptcData?: PTCData;
 };
 
 export type GameInfo = {

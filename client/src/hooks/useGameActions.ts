@@ -15,9 +15,9 @@ async function post<T>(path: string, body: object): Promise<T> {
 export function useGameActions() {
   const { playerId, roomCode, setRoom, setRoomCode, setError } = useGame();
 
-  async function createRoom(playerName: string) {
+  async function createRoom(playerName: string, gameType: 'raja-mantri' | 'pass-the-card' = 'raja-mantri') {
     try {
-      const room = await post<Room>('/api/rooms/create', { playerName, playerId });
+      const room = await post<Room>('/api/rooms/create', { playerName, playerId, gameType });
       setRoomCode(room.code);
       setRoom(room);
       return room;
@@ -69,5 +69,21 @@ export function useGameActions() {
     }
   }
 
-  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards };
+  async function ptcStartGame() {
+    try {
+      await post('/api/ptc/start', { code: roomCode, playerId });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
+  async function ptcSelectCard(cardUid: string) {
+    try {
+      await post('/api/ptc/select', { code: roomCode, playerId, cardUid });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
+  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards, ptcStartGame, ptcSelectCard };
 }

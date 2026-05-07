@@ -4,6 +4,8 @@ import { useGame } from '../context/PusherContext';
 import GameBoard from '../games/RajaMantriChorSipahi/GameBoard';
 import RoundEnd from '../games/RajaMantriChorSipahi/RoundEnd';
 import GameOver from '../games/RajaMantriChorSipahi/GameOver';
+import PTCGameBoard from '../games/PassTheCard/GameBoard';
+import PTCWinScreen from '../games/PassTheCard/WinScreen';
 
 export default function GamePage() {
   const navigate = useNavigate();
@@ -15,11 +17,17 @@ export default function GamePage() {
 
   if (!room) return null;
 
+  // Pass The Card
+  if (room.gameType === 'pass-the-card') {
+    if (room.ptcPhase === 'game-over') return <PTCWinScreen />;
+    if (room.ptcPhase === 'selecting') return <PTCGameBoard />;
+  }
+
+  // Raja Mantri
   if (room.phase === 'game-over') return <GameOver />;
   if (room.phase === 'round-end') return <RoundEnd />;
-  if (room.phase === 'card-reveal' || room.phase === 'playing') return <GameBoard />;
+  if (room.phase === 'card-reveal') return <GameBoard />;
 
-  // Fallback — shouldn't normally reach here
   return (
     <div className="min-h-screen flex items-center justify-center text-gray-500">
       Loading game…

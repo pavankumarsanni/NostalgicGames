@@ -13,7 +13,11 @@ function generateCode(): string {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { playerName, playerId } = req.body as { playerName: string; playerId: string };
+  const { playerName, playerId, gameType = 'raja-mantri' } = req.body as {
+    playerName: string;
+    playerId: string;
+    gameType?: 'raja-mantri' | 'pass-the-card';
+  };
   if (!playerName?.trim() || !playerId) return res.status(400).json({ error: 'Missing fields' });
 
   const player: Player = {
@@ -26,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const room: Room = {
     id: uuidv4(),
     code: generateCode(),
-    gameType: 'raja-mantri',
+    gameType,
     players: [player],
     phase: 'waiting',
     cards: DEFAULT_CARDS,

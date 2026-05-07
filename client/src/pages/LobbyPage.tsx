@@ -8,7 +8,8 @@ import CardSetupPanel from '../games/RajaMantriChorSipahi/CardSetupPanel';
 export default function LobbyPage() {
   const navigate = useNavigate();
   const { room, playerId, error, setError } = useGame();
-  const { startGame, updateCards } = useGameActions();
+  const { startGame, updateCards, ptcStartGame } = useGameActions();
+  const isPTC = room?.gameType === 'pass-the-card';
   const [copied, setCopied] = useState(false);
   const [showCardSetup, setShowCardSetup] = useState(false);
 
@@ -18,13 +19,16 @@ export default function LobbyPage() {
 
   useEffect(() => {
     if (room?.phase === 'card-reveal') navigate('/game');
-  }, [room?.phase, navigate]);
+    if (room?.ptcPhase === 'selecting') navigate('/game');
+  }, [room?.phase, room?.ptcPhase, navigate]);
 
   if (!room) return null;
 
   const me = room.players.find(p => p.id === playerId);
   const isHost = me?.isHost ?? false;
-  const canStart = room.players.length >= 3 && room.cards.length >= room.players.length;
+  const canStart = isPTC
+    ? room.players.length >= 2 && room.players.length <= 8
+    : room.players.length >= 3 && room.cards.length >= room.players.length;
 
   function copyCode() {
     navigator.clipboard.writeText(room!.code);
@@ -81,8 +85,8 @@ export default function LobbyPage() {
         )}
       </div>
 
-      {/* Card Setup (host only) */}
-      {isHost && (
+      {/* Card Setup (host only, Raja Mantri only) */}
+      {isHost && !isPTC && (
         <div className="card-glass p-5 w-full max-w-md">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-lg">🃏 Card Setup</h2>
@@ -121,7 +125,7 @@ export default function LobbyPage() {
 
       {isHost ? (
         <button
-          onClick={startGame}
+          onClick={isPTC ? ptcStartGame : startGame}
           disabled={!canStart}
           className="btn-gold w-full max-w-md text-lg disabled:opacity-40 disabled:cursor-not-allowed"
         >

@@ -15,12 +15,12 @@ const GAMES: GameInfo[] = [
     gradient: 'from-purple-900/80 to-indigo-900/80',
   },
   {
-    id: 'bluff',
-    title: 'Bluff / Cheat',
+    id: 'pass-the-card',
+    title: 'Pass The Card',
     emoji: '🃏',
-    description: "Play cards face-down and lie about them — but don't get caught!",
-    players: '3–6 players',
-    status: 'coming-soon',
+    description: 'Pick a card to pass! Collect 4 of the same animal to win. Fast, fun & chaotic!',
+    players: '2–8 players',
+    status: 'available',
     gradient: 'from-red-900/80 to-orange-900/80',
   },
   {
@@ -88,7 +88,8 @@ export default function HomePage() {
   async function handleCreate() {
     if (!playerName.trim()) return;
     setLoading(true);
-    const room = await createRoom(playerName);
+    const gameType = selectedGame?.id === 'pass-the-card' ? 'pass-the-card' : 'raja-mantri';
+    const room = await createRoom(playerName, gameType);
     setLoading(false);
     if (room) navigate('/lobby');
   }
