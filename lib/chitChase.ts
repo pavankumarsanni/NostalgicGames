@@ -90,7 +90,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function dealChitChase(room: Room, theme: ChitTheme): Room {
+function dealHands(room: Room, theme: ChitTheme, roundNum = 1): Room {
   const n = room.players.length;
   const themeData = THEMES[theme];
   const sets = themeData.cards.slice(0, n);
@@ -116,12 +116,23 @@ export function dealChitChase(room: Room, theme: ChitTheme): Room {
     ptcData: {
       hands,
       activePlayerIdx: 0,
-      round: 1,
+      round: roundNum,
       winnerId: null,
       theme,
       lastAction: null,
     },
   };
+}
+
+export function dealChitChase(room: Room, theme: ChitTheme, pointTarget: number): Room {
+  const scores: Record<string, number> = {};
+  room.players.forEach(p => { scores[p.id] = 0; });
+  return dealHands({ ...room, pointTarget, scores }, theme, 1);
+}
+
+export function startNextRound(room: Room): Room {
+  const theme = room.ptcData!.theme;
+  return dealHands(room, theme, 1);
 }
 
 export function passCard(room: Room, fromPlayerId: string, cardUid: string): Room {
@@ -144,26 +155,47 @@ export function passCard(room: Room, fromPlayerId: string, cardUid: string): Roo
   newHands[fromPlayerId] = fromHand.filter(c => c.uid !== cardUid); // 3 cards
   newHands[toPlayerId] = [...ptcData.hands[toPlayerId], card];       // 5 cards
 
-  // Check if receiver now has 4 matching (possible if they already had 3 of this set)
+  // Check if receiver now has 4 matching
   const receiverHand = newHands[toPlayerId];
   const matchCount = receiverHand.filter(c => c.setId === card.setId).length;
-  const winnerId = matchCount >= 4 ? toPlayerId : null;
+  const roundWinnerId = matchCount >= 4 ? toPlayerId : null;
 
-  // If winner, receiver keeps 4 matching (discard any extra — shouldn't happen)
+  const lastAction = {
+    fromName: room.players.find(p => p.id === fromPlayerId)!.name,
+    toName: room.players.find(p => p.id === toPlayerId)!.name,
+  };
+
+  if (!roundWinnerId) {
+    return {
+      ...room,
+      ptcPhase: 'selecting',
+      ptcData: {
+        ...ptcData,
+        hands: newHands,
+        activePlayerIdx: nextIdx,
+        round: ptcData.round + 1,
+        winnerId: null,
+        lastAction,
+      },
+    };
+  }
+
+  // Award points and check if target reached
+  const newScores = { ...(room.scores ?? {}) };
+  newScores[roundWinnerId] = (newScores[roundWinnerId] ?? 0) + 10;
+  const targetReached = (room.pointTarget ?? 100) <= newScores[roundWinnerId];
+
   return {
     ...room,
-    ptcPhase: winnerId ? 'game-over' : 'selecting',
+    scores: newScores,
+    ptcPhase: targetReached ? 'game-over' : 'round-over',
     ptcData: {
       ...ptcData,
       hands: newHands,
       activePlayerIdx: nextIdx,
       round: ptcData.round + 1,
-      winnerId,
-      lastAction: {
-        fromName: room.players.find(p => p.id === fromPlayerId)!.name,
-        toName: room.players.find(p => p.id === toPlayerId)!.name,
-        card,
-      },
+      winnerId: roundWinnerId,
+      lastAction,
     },
   };
 }

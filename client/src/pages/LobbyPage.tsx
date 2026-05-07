@@ -14,12 +14,13 @@ export default function LobbyPage() {
   const [copied, setCopied] = useState(false);
   const [showCardSetup, setShowCardSetup] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<ChitTheme>('animals');
+  const [pointTarget, setPointTarget] = useState(100);
 
   useEffect(() => { if (!room) navigate('/'); }, [room, navigate]);
 
   useEffect(() => {
     if (room?.phase === 'card-reveal') navigate('/game');
-    if (room?.ptcPhase === 'selecting') navigate('/game');
+    if (room?.ptcPhase === 'selecting' || room?.ptcPhase === 'round-over' || room?.ptcPhase === 'game-over') navigate('/game');
   }, [room?.phase, room?.ptcPhase, navigate]);
 
   if (!room) return null;
@@ -93,6 +94,30 @@ export default function LobbyPage() {
         </div>
       )}
 
+      {/* Chit Chase Point Target (host only) */}
+      {isHost && isChitChase && (
+        <div className="card-glass p-5 w-full max-w-md">
+          <h2 className="font-bold text-lg mb-1">🏆 Point Target</h2>
+          <p className="text-gray-500 text-xs mb-4">First to reach this score wins the game. Each round win = 10 pts.</p>
+          <div className="flex gap-2 flex-wrap">
+            {[50, 100, 200, 300].map(t => (
+              <button
+                key={t}
+                onClick={() => setPointTarget(t)}
+                className={`flex-1 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
+                  pointTarget === t
+                    ? 'border-amber-400 bg-amber-900/40 text-amber-300'
+                    : 'border-gray-700 bg-gray-800/40 text-gray-400 hover:border-gray-500'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-600 mt-3 text-center">≈ {Math.ceil(pointTarget / 10)} rounds to win</p>
+        </div>
+      )}
+
       {/* Raja Mantri Card Setup (host only) */}
       {isHost && !isChitChase && (
         <div className="card-glass p-5 w-full max-w-md">
@@ -131,7 +156,7 @@ export default function LobbyPage() {
 
       {isHost ? (
         <button
-          onClick={() => isChitChase ? chitChaseStart(selectedTheme) : startGame()}
+          onClick={() => isChitChase ? chitChaseStart(selectedTheme, pointTarget) : startGame()}
           disabled={!canStart}
           className="btn-gold w-full max-w-md text-lg disabled:opacity-40 disabled:cursor-not-allowed"
         >

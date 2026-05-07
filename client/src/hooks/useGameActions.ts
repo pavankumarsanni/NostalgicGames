@@ -69,9 +69,9 @@ export function useGameActions() {
     }
   }
 
-  async function chitChaseStart(theme: ChitTheme) {
+  async function chitChaseStart(theme: ChitTheme, pointTarget: number) {
     try {
-      await post('/api/ptc/start', { code: roomCode, playerId, theme });
+      await post('/api/ptc/start', { code: roomCode, playerId, theme, pointTarget });
     } catch (e: any) {
       setError(e.message);
     }
@@ -85,5 +85,13 @@ export function useGameActions() {
     }
   }
 
-  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards, chitChaseStart, chitChasePass };
+  async function chitChaseNextRound() {
+    try {
+      await post('/api/ptc/next-round', { code: roomCode, playerId });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
+  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards, chitChaseStart, chitChasePass, chitChaseNextRound };
 }

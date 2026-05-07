@@ -32,12 +32,11 @@ export type ChitCard = {
   name: string;
 };
 
-export type PTCPhase = 'waiting' | 'selecting' | 'game-over';
+export type PTCPhase = 'waiting' | 'selecting' | 'round-over' | 'game-over';
 
 export type LastAction = {
   fromName: string;
   toName: string;
-  card: ChitCard;
 } | null;
 
 export type PTCData = {
@@ -75,6 +74,8 @@ export type Room = {
   maxRounds: number;
   ptcPhase?: PTCPhase;
   ptcData?: PTCData;
+  pointTarget?: number;
+  scores?: Record<string, number>;
 };
 
 export type GameInfo = {

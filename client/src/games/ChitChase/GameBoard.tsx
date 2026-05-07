@@ -42,7 +42,7 @@ export default function ChitChaseBoard() {
       {lastAction && (
         <div className="w-full bg-indigo-900/30 border border-indigo-700/50 rounded-xl px-4 py-3 text-sm text-center animate-slide-up">
           <span className="text-indigo-300">
-            <strong>{lastAction.fromName}</strong> passed {lastAction.card.emoji} {lastAction.card.name} to <strong>{lastAction.toName}</strong>
+            <strong>{lastAction.fromName}</strong> passed a chit to <strong>{lastAction.toName}</strong>
           </span>
         </div>
       )}

@@ -19,7 +19,7 @@ export default function GamePage() {
 
   // Chit Chase
   if (room.gameType === 'chit-chase') {
-    if (room.ptcPhase === 'game-over') return <ChitChaseWin />;
+    if (room.ptcPhase === 'game-over' || room.ptcPhase === 'round-over') return <ChitChaseWin />;
     if (room.ptcPhase === 'selecting') return <ChitChaseBoard />;
   }
 
