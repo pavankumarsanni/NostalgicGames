@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { playerName, playerId, gameType = 'raja-mantri' } = req.body as {
     playerName: string;
     playerId: string;
-    gameType?: 'raja-mantri' | 'chit-chase';
+    gameType?: 'raja-mantri' | 'chit-chase' | 'housie';
   };
   if (!playerName?.trim() || !playerId) return res.status(400).json({ error: 'Missing fields' });
 

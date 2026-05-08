@@ -1,5 +1,5 @@
 import { useGame } from '../context/PusherContext';
-import { ChitTheme, RoleCard, Room } from '../types';
+import { ChitTheme, HousieClaimType, RoleCard, Room } from '../types';
 
 async function post<T>(path: string, body: object): Promise<T> {
   const res = await fetch(path, {
@@ -15,7 +15,7 @@ async function post<T>(path: string, body: object): Promise<T> {
 export function useGameActions() {
   const { playerId, roomCode, setRoom, setRoomCode, setError } = useGame();
 
-  async function createRoom(playerName: string, gameType: 'raja-mantri' | 'chit-chase' = 'raja-mantri') {
+  async function createRoom(playerName: string, gameType: 'raja-mantri' | 'chit-chase' | 'housie' = 'raja-mantri') {
     try {
       const room = await post<Room>('/api/rooms/create', { playerName, playerId, gameType });
       setRoomCode(room.code);
@@ -93,5 +93,29 @@ export function useGameActions() {
     }
   }
 
-  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards, chitChaseStart, chitChasePass, chitChaseNextRound };
+  async function housieStart() {
+    try {
+      await post('/api/housie/start', { code: roomCode, playerId });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
+  async function housieDrawNumber() {
+    try {
+      await post('/api/housie/draw', { code: roomCode, playerId });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
+  async function houseClaim(claimType: HousieClaimType) {
+    try {
+      await post('/api/housie/claim', { code: roomCode, playerId, claimType });
+    } catch (e: any) {
+      setError(e.message);
+    }
+  }
+
+  return { createRoom, joinRoom, startGame, makeGuess, nextRound, updateCards, chitChaseStart, chitChasePass, chitChaseNextRound, housieStart, housieDrawNumber, houseClaim };
 }

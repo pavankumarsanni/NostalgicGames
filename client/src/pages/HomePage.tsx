@@ -45,9 +45,9 @@ const GAMES: GameInfo[] = [
     id: 'housie',
     title: 'Housie / Tambola',
     emoji: '🎱',
-    description: 'Classic bingo with an auto number caller and digital tickets.',
+    description: 'Classic tambola with digital tickets! Claim Early Five, Lines & Full House.',
     players: '2–20 players',
-    status: 'coming-soon',
+    status: 'available',
     gradient: 'from-yellow-900/80 to-amber-900/80',
   },
   {
@@ -88,7 +88,11 @@ export default function HomePage() {
   async function handleCreate() {
     if (!playerName.trim()) return;
     setLoading(true);
-    const gameType = selectedGame?.id === 'chit-chase' ? 'chit-chase' : 'raja-mantri';
+    const gameType = selectedGame?.id === 'chit-chase'
+      ? 'chit-chase'
+      : selectedGame?.id === 'housie'
+      ? 'housie'
+      : 'raja-mantri';
     const room = await createRoom(playerName, gameType);
     setLoading(false);
     if (room) navigate('/lobby');
