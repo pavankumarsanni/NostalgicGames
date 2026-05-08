@@ -48,6 +48,30 @@ export type PTCData = {
   lastAction: LastAction;
 };
 
+// ─── Housie / Tambola ────────────────────────────────────────────────────────
+
+export type HousiePhase = 'waiting' | 'playing' | 'game-over';
+
+export type HousieClaimType = 'early-five' | 'top-line' | 'middle-line' | 'bottom-line' | 'full-house';
+
+export type HousieTicket = {
+  // 3 rows × 9 cols; null = blank cell
+  grid: (number | null)[][];
+};
+
+export type HousieWin = {
+  claimType: HousieClaimType;
+  winnerId: string;
+  winnerName: string;
+};
+
+export type HousieData = {
+  tickets: Record<string, HousieTicket>;
+  calledNumbers: number[];
+  lastCalled: number | null;
+  wins: HousieWin[];
+};
+
 // ─── Shared ─────────────────────────────────────────────────────────────────
 
 export type GamePhase = 'waiting' | 'card-reveal' | 'round-end' | 'game-over';
@@ -63,7 +87,7 @@ export type Player = {
 export type Room = {
   id: string;
   code: string;
-  gameType: 'raja-mantri' | 'chit-chase';
+  gameType: 'raja-mantri' | 'chit-chase' | 'housie';
   players: Player[];
   // Raja Mantri
   phase: GamePhase;
@@ -78,6 +102,9 @@ export type Room = {
   ptcData?: PTCData;
   pointTarget?: number;
   scores?: Record<string, number>;
+  // Housie
+  housiePhase?: HousiePhase;
+  housieData?: HousieData;
 };
 
 export type GameInfo = {

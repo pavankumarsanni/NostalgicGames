@@ -9,8 +9,9 @@ import ThemeSelector from '../games/ChitChase/ThemeSelector';
 export default function LobbyPage() {
   const navigate = useNavigate();
   const { room, playerId, error, setError } = useGame();
-  const { startGame, updateCards, chitChaseStart } = useGameActions();
+  const { startGame, updateCards, chitChaseStart, housieStart } = useGameActions();
   const isChitChase = room?.gameType === 'chit-chase';
+  const isHousie = room?.gameType === 'housie';
   const [copied, setCopied] = useState(false);
   const [showCardSetup, setShowCardSetup] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<ChitTheme>('animals');
@@ -21,13 +22,16 @@ export default function LobbyPage() {
   useEffect(() => {
     if (room?.phase === 'card-reveal') navigate('/game');
     if (room?.ptcPhase === 'selecting' || room?.ptcPhase === 'round-over' || room?.ptcPhase === 'game-over') navigate('/game');
-  }, [room?.phase, room?.ptcPhase, navigate]);
+    if (room?.housiePhase === 'playing' || room?.housiePhase === 'game-over') navigate('/game');
+  }, [room?.phase, room?.ptcPhase, room?.housiePhase, navigate]);
 
   if (!room) return null;
 
   const me = room.players.find(p => p.id === playerId);
   const isHost = me?.isHost ?? false;
-  const canStart = isChitChase
+  const canStart = isHousie
+    ? room.players.length >= 2
+    : isChitChase
     ? room.players.length >= 2 && room.players.length <= 8
     : room.players.length >= 3 && room.cards.length >= room.players.length;
 
@@ -42,7 +46,7 @@ export default function LobbyPage() {
       {/* Game badge */}
       <div className="text-center">
         <span className="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded-full">
-          {isChitChase ? '🃏 Chit Chase' : '👑 Raja Mantri Chor Sipahi'}
+          {isChitChase ? '🃏 Chit Chase' : isHousie ? '🎱 Housie / Tambola' : '👑 Raja Mantri Chor Sipahi'}
         </span>
       </div>
 
@@ -78,10 +82,10 @@ export default function LobbyPage() {
             </div>
           ))}
         </div>
-        {!isChitChase && room.players.length < 3 && (
+        {!isChitChase && !isHousie && room.players.length < 3 && (
           <p className="text-gray-500 text-sm mt-3 text-center">Waiting for at least 3 players…</p>
         )}
-        {isChitChase && room.players.length < 2 && (
+        {(isChitChase || isHousie) && room.players.length < 2 && (
           <p className="text-gray-500 text-sm mt-3 text-center">Waiting for at least 2 players…</p>
         )}
       </div>
@@ -118,8 +122,21 @@ export default function LobbyPage() {
         </div>
       )}
 
+      {/* Housie info (host only) */}
+      {isHost && isHousie && (
+        <div className="card-glass p-5 w-full max-w-md">
+          <h2 className="font-bold text-lg mb-2">🎱 Housie / Tambola</h2>
+          <ul className="text-sm text-gray-400 space-y-1">
+            <li>• Each player gets a unique 3×9 ticket (15 numbers)</li>
+            <li>• You draw numbers one at a time as host</li>
+            <li>• Players claim: Early Five, Top Line, Middle Line, Bottom Line, Full House</li>
+            <li>• Game ends when Full House is claimed</li>
+          </ul>
+        </div>
+      )}
+
       {/* Raja Mantri Card Setup (host only) */}
-      {isHost && !isChitChase && (
+      {isHost && !isChitChase && !isHousie && (
         <div className="card-glass p-5 w-full max-w-md">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-lg">🃏 Card Setup</h2>
@@ -140,10 +157,15 @@ export default function LobbyPage() {
         </div>
       )}
 
-      {/* Non-host theme display */}
+      {/* Non-host info displays */}
       {!isHost && isChitChase && (
         <div className="card-glass p-4 w-full max-w-md text-center">
           <p className="text-gray-400 text-sm">Host will choose a card theme before starting</p>
+        </div>
+      )}
+      {!isHost && isHousie && (
+        <div className="card-glass p-4 w-full max-w-md text-center">
+          <p className="text-gray-400 text-sm">You'll receive a unique ticket when the game starts</p>
         </div>
       )}
 
@@ -156,7 +178,7 @@ export default function LobbyPage() {
 
       {isHost ? (
         <button
-          onClick={() => isChitChase ? chitChaseStart(selectedTheme, pointTarget) : startGame()}
+          onClick={() => isChitChase ? chitChaseStart(selectedTheme, pointTarget) : isHousie ? housieStart() : startGame()}
           disabled={!canStart}
           className="btn-gold w-full max-w-md text-lg disabled:opacity-40 disabled:cursor-not-allowed"
         >

@@ -6,6 +6,8 @@ import RoundEnd from '../games/RajaMantriChorSipahi/RoundEnd';
 import GameOver from '../games/RajaMantriChorSipahi/GameOver';
 import ChitChaseBoard from '../games/ChitChase/GameBoard';
 import ChitChaseWin from '../games/ChitChase/WinScreen';
+import HousieBoard from '../games/Housie/GameBoard';
+import HousieGameOver from '../games/Housie/GameOver';
 
 export default function GamePage() {
   const navigate = useNavigate();
@@ -16,6 +18,12 @@ export default function GamePage() {
   }, [room, navigate]);
 
   if (!room) return null;
+
+  // Housie
+  if (room.gameType === 'housie') {
+    if (room.housiePhase === 'game-over') return <HousieGameOver />;
+    if (room.housiePhase === 'playing') return <HousieBoard />;
+  }
 
   // Chit Chase
   if (room.gameType === 'chit-chase') {
