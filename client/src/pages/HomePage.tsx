@@ -182,7 +182,7 @@ export default function HomePage() {
                 <label className="text-sm text-gray-400 mb-1 block">Your name</label>
                 <input
                   className="input-field"
-                  placeholder="e.g. Pavan"
+                  placeholder="e.g. Joe"
                   value={playerName}
                   onChange={e => setPlayerName(e.target.value)}
                   maxLength={20}
