@@ -95,27 +95,41 @@ function dealHands(room: Room, theme: ChitTheme, roundNum = 1): Room {
   const themeData = THEMES[theme];
   const sets = themeData.cards.slice(0, n);
 
-  const allCards: ChitCard[] = sets.flatMap(s =>
-    [0, 1, 2, 3].map(i => ({
+  // Balanced dealing: distribute each set's 4 cards round-robin across players,
+  // rotating which player gets the "extra" card per set.
+  // With 3 players: everyone starts with exactly [2,1,1] — no one gets 3+ of a set.
+  // With 4 players: everyone starts with [1,1,1,1] — no duplicates at all.
+  const hands: Record<string, ChitCard[]> = {};
+  room.players.forEach(p => { hands[p.id] = []; });
+
+  sets.forEach((s, setIdx) => {
+    const setCards = shuffle([0, 1, 2, 3].map(i => ({
       uid: `${s.setId}-${i}`,
       setId: s.setId,
       emoji: s.emoji,
       name: s.name,
-    }))
-  );
-
-  const shuffled = shuffle(allCards);
-  const hands: Record<string, ChitCard[]> = {};
-  room.players.forEach((p, i) => {
-    hands[p.id] = shuffled.slice(i * 4, i * 4 + 4);
+    })));
+    // Start distribution from a different player each set so the "extra" rotates
+    setCards.forEach((card, i) => {
+      const playerIdx = (setIdx + i) % n;
+      hands[room.players[playerIdx].id].push(card);
+    });
   });
+
+  // Shuffle each player's hand so card order is random
+  room.players.forEach(p => {
+    hands[p.id] = shuffle(hands[p.id]);
+  });
+
+  // Random starting player each round so no one always goes first
+  const activePlayerIdx = Math.floor(Math.random() * n);
 
   return {
     ...room,
     ptcPhase: 'selecting',
     ptcData: {
       hands,
-      activePlayerIdx: 0,
+      activePlayerIdx,
       round: roundNum,
       winnerId: null,
       theme,
